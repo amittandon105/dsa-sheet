@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSA Learning Tracker</title>
+  <style>
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      --color-background-primary: #ffffff;
+      --color-background-secondary: #f6f8fa;
+      --color-text-primary: #24292f;
+      --color-text-secondary: #57606a;
+      --color-text-tertiary: #8c959f;
+      --color-border-tertiary: #d0d7de;
+      --border-radius-md: 6px;
+      --border-radius-lg: 8px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-background-primary: #0d1117;
+        --color-background-secondary: #161b22;
+        --color-text-primary: #c9d1d9;
+        --color-text-secondary: #8b949e;
+        --color-text-tertiary: #6e7681;
+        --color-border-tertiary: #30363d;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: var(--color-background-secondary); }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+    .root { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; font-family: var(--font-sans); background: var(--color-background-primary); min-height: 100vh; }
+    
+    h1 { color: var(--color-text-primary); margin-bottom: 0.5rem; }
+    .subtitle { color: var(--color-text-secondary); margin-bottom: 2rem; font-size: 14px; }
+    
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+    .stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem; border: 1px solid var(--color-border-tertiary); }
+    .stat-val { font-size: 28px; font-weight: 600; color: var(--color-text-primary); }
+    .stat-label { font-size: 12px; color: var(--color-text-secondary); margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .prog-wrap { height: 8px; background: var(--color-background-secondary); border-radius: 4px; margin-bottom: 2rem; overflow: hidden; border: 1px solid var(--color-border-tertiary); }
+    .prog-fill { height: 100%; background: linear-gradient(90deg, #185FA5, #0C447C); border-radius: 4px; transition: width 0.3s ease; }
+    
+    .phase { margin-bottom: 1.5rem; background: var(--color-background-primary); border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; }
+    .phase-header { display: flex; align-items: center; gap: 12px; padding: 1rem; border-bottom: 1px solid var(--color-border-tertiary); cursor: pointer; user-select: none; transition: background 0.2s; }
+    .phase-header:hover { background: var(--color-background-secondary); }
+    .phase-num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+    .phase-title { font-size: 15px; font-weight: 600; color: var(--color-text-primary); flex: 1; }
+    .phase-meta { font-size: 13px; color: var(--color-text-secondary); }
+    .phase-body { padding: 0; }
+    
+    .q-row { display: flex; align-items: center; gap: 12px; padding: 10px 1rem; border-bottom: 1px solid var(--color-border-tertiary); transition: opacity 0.2s; }
+    .q-row:last-child { border-bottom: none; }
+    .q-row:hover { background: var(--color-background-secondary); }
+    .q-seq { font-size: 12px; color: var(--color-text-tertiary); width: 32px; flex-shrink: 0; text-align: center; }
+    .q-name { font-size: 13px; color: var(--color-text-primary); flex: 1; }
+    .q-lc { font-size: 12px; color: var(--color-text-secondary); width: 50px; flex-shrink: 0; text-align: right; }
+    .diff { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; flex-shrink: 0; }
+    
+    .easy { background: #EAF3DE; color: #27500A; }
+    .medium { background: #FAEEDA; color: #633806; }
+    .hard { background: #FCEBEB; color: #791F1F; }
+    
+    @media (prefers-color-scheme: dark) {
+      .easy { background: #1a3a1a; color: #a8e6a1; }
+      .medium { background: #3a2a1a; color: #ffb366; }
+      .hard { background: #3a1a1a; color: #ff9999; }
+    }
+    
+    .done-cb { width: 18px; height: 18px; cursor: pointer; accent-color: #185FA5; flex-shrink: 0; }
+    .tip { font-size: 13px; color: var(--color-text-secondary); padding: 10px 1rem 12px; border-top: 1px solid var(--color-border-tertiary); background: var(--color-background-secondary); line-height: 1.6; }
+    .tip-icon { margin-right: 6px; }
+    
+    .chevron { font-size: 16px; color: var(--color-text-secondary); transition: transform 0.2s; flex-shrink: 0; }
+    .collapsed .chevron { transform: rotate(-90deg); }
+    .collapsed .phase-body { display: none; }
+    .collapsed .tip { display: none; }
+
+    .footer { text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--color-border-tertiary); font-size: 12px; color: var(--color-text-secondary); }
+    .footer a { color: #185FA5; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="root">
+    <h1>📚 DSA Learning Tracker</h1>
+    <p class="subtitle">Structured roadmap from beginner to advanced • 150 LeetCode problems</p>
+    
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-val" id="s-total">150</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="s-done">0</div>
+        <div class="stat-label">Completed</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="s-pct">0%</div>
+        <div class="stat-label">Progress</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="s-left">150</div>
+        <div class="stat-label">Remaining</div>
+      </div>
+    </div>
+    
+    <div class="prog-wrap">
+      <div class="prog-fill" id="prog" style="width:0%"></div>
+    </div>
+    
+    <h2 class="sr-only">Ordered DSA question list from beginner to advanced with progress tracking</h2>
+    <div id="container"></div>
+
+    <div class="footer">
+      <p>💡 Check boxes to track your progress. Refresh the page to save locally in your browser.</p>
+      <p><a href="https://github.com/amittandon105/dsa-sheet">View on GitHub</a></p>
+    </div>
+  </div>
+
+  <script>
+    const PHASES = [
+      {
+        num: 1, title: "Arrays & Strings", weeks: "Week 1", color: "#185FA5", bg: "#E6F1FB", fg: "#0C447C",
+        tip: "Start here. Master two pointers and sliding window — these patterns repeat everywhere.",
+        qs: [
+          { n: "Two Sum", lc: 1, d: "Easy" },
+          { n: "Contains Duplicate", lc: 217, d: "Easy" },
+          { n: "Valid Palindrome", lc: 125, d: "Easy" },
+          { n: "Best Time to Buy and Sell Stock", lc: 121, d: "Easy" },
+          { n: "Move Zeroes", lc: 283, d: "Easy" },
+          { n: "Remove Duplicates from Sorted Array", lc: 26, d: "Easy" },
+          { n: "Maximum Subarray (Kadane's)", lc: 53, d: "Medium" },
+          { n: "Longest Substring Without Repeating", lc: 3, d: "Medium" },
+          { n: "Product of Array Except Self", lc: 238, d: "Medium" },
+          { n: "3Sum", lc: 15, d: "Medium" },
+          { n: "Container With Most Water", lc: 11, d: "Medium" },
+          { n: "Rotate Array", lc: 189, d: "Medium" },
+          { n: "Find Minimum in Rotated Sorted Array", lc: 153, d: "Medium" },
+          { n: "Sort Colors (Dutch National Flag)", lc: 75, d: "Medium" },
+          { n: "Trapping Rain Water", lc: 42, d: "Hard" },
+          { n: "Minimum Window Substring", lc: 76, d: "Hard" },
+        ]
+      },
+      {
+        num: 2, title: "Hashing & Sliding Window", weeks: "Week 1–2", color: "#534AB7", bg: "#EEEDFE", fg: "#3C3489",
+        tip: "HashMap is your best friend. Get instant at identifying frequency / index lookup problems.",
+        qs: [
+          { n: "Valid Anagram", lc: 242, d: "Easy" },
+          { n: "Group Anagrams", lc: 49, d: "Medium" },
+          { n: "Top K Frequent Elements", lc: 347, d: "Medium" },
+          { n: "Subarray Sum Equals K", lc: 560, d: "Medium" },
+          { n: "Permutation in String", lc: 567, d: "Medium" },
+          { n: "Longest Repeating Character Replacement", lc: 424, d: "Medium" },
+          { n: "Longest Consecutive Sequence", lc: 128, d: "Medium" },
+          { n: "Sliding Window Maximum", lc: 239, d: "Hard" },
+        ]
+      },
+      {
+        num: 3, title: "Linked List", weeks: "Week 2", color: "#3C3489", bg: "#EEEDFE", fg: "#26215C",
+        tip: "Draw every problem on paper first. Pointer bugs are visual bugs — you can't think them away.",
+        qs: [
+          { n: "Find Middle of Linked List", lc: 876, d: "Easy" },
+          { n: "Reverse Linked List", lc: 206, d: "Easy" },
+          { n: "Detect Cycle in Linked List", lc: 141, d: "Easy" },
+          { n: "Merge Two Sorted Lists", lc: 21, d: "Easy" },
+          { n: "Linked List Cycle II (find start)", lc: 142, d: "Medium" },
+          { n: "Remove Nth Node From End", lc: 19, d: "Medium" },
+          { n: "Reorder List", lc: 143, d: "Medium" },
+          { n: "LRU Cache", lc: 146, d: "Medium" },
+          { n: "Merge K Sorted Lists", lc: 23, d: "Hard" },
+        ]
+      },
+      {
+        num: 4, title: "Trees & BST", weeks: "Week 2–3", color: "#0F6E56", bg: "#E1F5EE", fg: "#085041",
+        tip: "Solve every problem recursively first, then iteratively. DFS template = base case + left + right.",
+        qs: [
+          { n: "Invert Binary Tree", lc: 226, d: "Easy" },
+          { n: "Maximum Depth of Binary Tree", lc: 104, d: "Easy" },
+          { n: "Diameter of Binary Tree", lc: 543, d: "Easy" },
+          { n: "Level Order Traversal (BFS)", lc: 102, d: "Medium" },
+          { n: "Binary Tree Right Side View", lc: 199, d: "Medium" },
+          { n: "Binary Tree Zigzag Level Order", lc: 103, d: "Medium" },
+          { n: "Validate Binary Search Tree", lc: 98, d: "Medium" },
+          { n: "Kth Smallest in BST", lc: 230, d: "Medium" },
+          { n: "Lowest Common Ancestor of BST", lc: 235, d: "Medium" },
+          { n: "Lowest Common Ancestor of BT", lc: 236, d: "Medium" },
+          { n: "Binary Tree Maximum Path Sum", lc: 124, d: "Hard" },
+          { n: "Serialize and Deserialize Binary Tree", lc: 297, d: "Hard" },
+        ]
+      },
+      {
+        num: 5, title: "Stack & Queue", weeks: "Week 3", color: "#993C1D", bg: "#FAECE7", fg: "#712B13",
+        tip: "Monotonic stack is a Walmart favourite. Think: 'what do I pop when I see a larger/smaller element?'",
+        qs: [
+          { n: "Valid Parentheses", lc: 20, d: "Easy" },
+          { n: "Implement Queue using Stacks", lc: 232, d: "Easy" },
+          { n: "Next Greater Element I", lc: 496, d: "Easy" },
+          { n: "Min Stack", lc: 155, d: "Medium" },
+          { n: "Daily Temperatures", lc: 739, d: "Medium" },
+          { n: "Decode String", lc: 394, d: "Medium" },
+          { n: "Asteroid Collision", lc: 735, d: "Medium" },
+          { n: "Largest Rectangle in Histogram", lc: 84, d: "Hard" },
+        ]
+      },
+      {
+        num: 6, title: "Binary Search", weeks: "Week 3–4", color: "#854F0B", bg: "#FAEEDA", fg: "#633806",
+        tip: "Always ask: can I binary search on the ANSWER instead of the array? That's the key insight for hard BS problems.",
+        qs: [
+          { n: "Binary Search", lc: 704, d: "Easy" },
+          { n: "Find Peak Element", lc: 162, d: "Medium" },
+          { n: "Search in Rotated Sorted Array", lc: 33, d: "Medium" },
+          { n: "Find First and Last Position", lc: 34, d: "Medium" },
+          { n: "Search a 2D Matrix", lc: 74, d: "Medium" },
+          { n: "Koko Eating Bananas", lc: 875, d: "Medium" },
+          { n: "Minimum Days to Make M Bouquets", lc: 1482, d: "Medium" },
+          { n: "Median of Two Sorted Arrays", lc: 4, d: "Hard" },
+        ]
+      },
+      {
+        num: 7, title: "Heap / Priority Queue", weeks: "Week 4", color: "#0F6E56", bg: "#E1F5EE", fg: "#085041",
+        tip: "Rule of thumb: 'Kth largest/smallest/frequent' = heap. 'Find median live' = two heaps.",
+        qs: [
+          { n: "Kth Largest Element in Array", lc: 215, d: "Medium" },
+          { n: "K Closest Points to Origin", lc: 973, d: "Medium" },
+          { n: "Top K Frequent Elements", lc: 347, d: "Medium" },
+          { n: "Task Scheduler", lc: 621, d: "Medium" },
+          { n: "Merge K Sorted Lists", lc: 23, d: "Hard" },
+          { n: "Find Median from Data Stream", lc: 295, d: "Hard" },
+        ]
+      },
+      {
+        num: 8, title: "Graphs", weeks: "Week 4–5", color: "#534AB7", bg: "#EEEDFE", fg: "#3C3489",
+        tip: "Build the adjacency list first, always. BFS = queue + visited. DFS = recursion + visited. Never skip the visited check.",
+        qs: [
+          { n: "Number of Islands", lc: 200, d: "Medium" },
+          { n: "Rotting Oranges (BFS)", lc: 994, d: "Medium" },
+          { n: "Clone Graph", lc: 133, d: "Medium" },
+          { n: "Number of Connected Components", lc: 323, d: "Medium" },
+          { n: "Graph Valid Tree", lc: 261, d: "Medium" },
+          { n: "Pacific Atlantic Water Flow", lc: 417, d: "Medium" },
+          { n: "Course Schedule (Cycle detect)", lc: 207, d: "Medium" },
+          { n: "Course Schedule II (Topo sort)", lc: 210, d: "Medium" },
+          { n: "Walls and Gates", lc: 286, d: "Medium" },
+          { n: "Dijkstra – Network Delay Time", lc: 743, d: "Medium" },
+          { n: "Word Ladder", lc: 127, d: "Hard" },
+          { n: "Swim in Rising Water", lc: 778, d: "Hard" },
+        ]
+      },
+      {
+        num: 9, title: "Dynamic Programming", weeks: "Week 5–6", color: "#185FA5", bg: "#E6F1FB", fg: "#0C447C",
+        tip: "Step 1: find the recursive solution. Step 2: memoize. Step 3: convert to bottom-up table. Never skip Step 1.",
+        qs: [
+          { n: "Climbing Stairs", lc: 70, d: "Easy" },
+          { n: "House Robber", lc: 198, d: "Medium" },
+          { n: "House Robber II", lc: 213, d: "Medium" },
+          { n: "Unique Paths", lc: 62, d: "Medium" },
+          { n: "Jump Game", lc: 55, d: "Medium" },
+          { n: "Coin Change", lc: 322, d: "Medium" },
+          { n: "Longest Increasing Subsequence", lc: 300, d: "Medium" },
+          { n: "0/1 Knapsack (Partition Equal Subset)", lc: 416, d: "Medium" },
+          { n: "Word Break", lc: 139, d: "Medium" },
+          { n: "Longest Common Subsequence", lc: 1143, d: "Medium" },
+          { n: "Best Time to Buy/Sell Stock with Cooldown", lc: 309, d: "Medium" },
+          { n: "Edit Distance", lc: 72, d: "Hard" },
+          { n: "Burst Balloons", lc: 312, d: "Hard" },
+        ]
+      },
+      {
+        num: 10, title: "Backtracking", weeks: "Week 6", color: "#854F0B", bg: "#FAEEDA", fg: "#633806",
+        tip: "Template: choose → explore → unchoose. If you can't write that loop, pause and re-read the pattern.",
+        qs: [
+          { n: "Subsets", lc: 78, d: "Medium" },
+          { n: "Permutations", lc: 46, d: "Medium" },
+          { n: "Letter Combinations of Phone Number", lc: 17, d: "Medium" },
+          { n: "Combination Sum", lc: 39, d: "Medium" },
+          { n: "Palindrome Partitioning", lc: 131, d: "Medium" },
+          { n: "Word Search", lc: 79, d: "Medium" },
+          { n: "N-Queens", lc: 51, d: "Hard" },
+        ]
+      },
+      {
+        num: 11, title: "Tries & Advanced", weeks: "Week 7", color: "#3C3489", bg: "#EEEDFE", fg: "#26215C",
+        tip: "Trie = prefix tree. Implement it from scratch once — then every Trie problem becomes easy.",
+        qs: [
+          { n: "Implement Trie", lc: 208, d: "Medium" },
+          { n: "Design Add and Search Words", lc: 211, d: "Medium" },
+          { n: "Find All Anagrams in String", lc: 438, d: "Medium" },
+          { n: "Word Search II", lc: 212, d: "Hard" },
+          { n: "Maximum Frequency Stack", lc: 895, d: "Hard" },
+        ]
+      },
+    ];
+
+    let checked = {};
+
+    function updateStats() {
+      const total = PHASES.reduce((s, p) => s + p.qs.length, 0);
+      const done = Object.values(checked).filter(Boolean).length;
+      const pct = Math.round((done / total) * 100);
+      document.getElementById('s-total').textContent = total;
+      document.getElementById('s-done').textContent = done;
+      document.getElementById('s-pct').textContent = pct + '%';
+      document.getElementById('s-left').textContent = total - done;
+      document.getElementById('prog').style.width = pct + '%';
+      localStorage.setItem('dsa-checked', JSON.stringify(checked));
+    }
+
+    function render() {
+      const c = document.getElementById('container');
+      c.innerHTML = '';
+      let globalSeq = 0;
+      PHASES.forEach((phase, pi) => {
+        const div = document.createElement('div');
+        div.className = 'phase';
+        const doneCount = phase.qs.filter((_, qi) => checked[`${pi}-${qi}`]).length;
+
+        const rows = phase.qs.map((q, qi) => {
+          globalSeq++;
+          const key = `${pi}-${qi}`;
+          const isDone = checked[key];
+          return `<div class="q-row" style="${isDone ? 'opacity:0.6' : ''}">
+            <span class="q-seq">${globalSeq}</span>
+            <span class="q-name">${q.n}</span>
+            <span class="q-lc">LC ${q.lc}</span>
+            <span class="diff ${q.d.toLowerCase()}">${q.d}</span>
+            <input type="checkbox" class="done-cb" data-key="${key}" ${isDone ? 'checked' : ''} />
+          </div>`;
+        }).join('');
+
+        div.innerHTML = `
+          <div class="phase-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:${phase.bg};color:${phase.fg}">${phase.num}</div>
+            <span class="phase-title">${phase.title}</span>
+            <span class="phase-meta">${phase.weeks} &nbsp;·&nbsp; ${doneCount}/${phase.qs.length}</span>
+            <span class="chevron">⋀</span>
+          </div>
+          <div class="phase-body">${rows}</div>
+          <div class="tip"><span class="tip-icon">💡</span>${phase.tip}</div>
+        `;
+        c.appendChild(div);
+      });
+
+      document.querySelectorAll('.done-cb').forEach(cb => {
+        cb.addEventListener('change', function() {
+          checked[this.dataset.key] = this.checked;
+          updateStats();
+          render();
+        });
+      });
+      updateStats();
+    }
+
+    function togglePhase(header) {
+      header.parentElement.classList.toggle('collapsed');
+    }
+
+    // Load progress from localStorage
+    const saved = localStorage.getItem('dsa-checked');
+    if (saved) {
+      checked = JSON.parse(saved);
+    }
+
+    render();
+  </script>
+</body>
+</html>
